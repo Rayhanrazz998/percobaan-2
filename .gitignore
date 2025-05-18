@@ -1,0 +1,35 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+env/
+.env/
+
+# Data files (folder tempat simpan data produk, riwayat, dsb)
+data/
+images/
+uploads/
+
+# Log files
+*.log
+
+# File struk atau hasil export
+*.pdf
+*.txt
+
+# Editor / OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Python packaging
+dist/
+build/
+*.egg-info/
+
+# Streamlit cache (jika ada)
+.streamlit/
