@@ -2,13 +2,12 @@ import streamlit as st
 import pandas as pd
 import json
 import os
-import io  # <--- ini penting ditambahkan
+import io
 from datetime import datetime
-from fpdf import FPDF  # kalau kamu ingin buat PDF
+from fpdf import FPDF 
 
 
-
-# ---------- Fungsi Pengelolaan User ----------
+# ---------- FUNGSI PENGELOLAAN USER ----------
 def load_users():
     if os.path.exists("users.json"):
         with open("users.json", "r") as f:
@@ -22,10 +21,10 @@ def save_user(username, password):
         json.dump(users, f)
 
 
-# ---------- Fungsi Registrasi ----------
+# ---------- FUNGSI REGISTRASI ----------
 def register():
-    st.image("images/logo.png", width=100)
-    st.title("Registrasi Akun Kasir Sayur Sawi")
+    st.image("images/logokasir.png", width=100)
+    st.title("Registrasi Akun Kasir")
 
     username = st.text_input("Username Baru")
     password = st.text_input("Password Baru", type="password")
@@ -46,10 +45,10 @@ def register():
                 st.session_state.page = "login"
                 st.rerun()
 
-# ---------- Fungsi Login ----------
+# ---------- FUNGSI LOGIN ----------
 def login():
-    st.image("images/logo.png", width=100)
-    st.title("Login Kasir Sayur Sawi")
+    st.image("images/logokasir.png", width=100)
+    st.title("Login Kasir")
 
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
@@ -68,7 +67,7 @@ def login():
         st.session_state.page = "register"
         st.rerun()
 
-# Tambahkan fungsi ini di atas halaman_kasir()
+# ---------- FUNGSI HALAMAN KASIR ----------
 def get_nomor_nota():
     nota_path = "data/nomor_nota.json"
     today = datetime.now().strftime("%d%m%y")
@@ -88,14 +87,14 @@ def get_nomor_nota():
 
     return f"CS/{today}/{str(nomor).zfill(4)}"
 
-# ---------- Fungsi Kasir ----------
+# ---------- FUNGSI KASIR ----------
 def halaman_kasir():
-    st.subheader("🛒 Kasir Sayur Sawi")
+    st.subheader("🛒 Kasir")
 
     if not os.path.exists("data/produk.csv"):
         os.makedirs("data", exist_ok=True)
         pd.DataFrame(columns=["nama", "harga", "stok", "gambar"]).to_csv("data/produk.csv", index=False)
-
+    
     df = pd.read_csv("data/produk.csv")
     df = df[df["stok"] > 0]
 
@@ -112,9 +111,9 @@ def halaman_kasir():
                     st.empty()
 
             with col1:
-                st.markdown(f"**{row['nama']}**")
+                st.markdown(f"{row['nama']}")
                 st.caption(f"Rp{row['harga']:,} | Stok: {int(row['stok'])}")
-
+   
             with col2:
                 jumlah = st.number_input(f"Jumlah {row['nama']}", min_value=0, max_value=int(row["stok"]), key=f"jumlah_{i}")
 
@@ -150,7 +149,7 @@ def halaman_kasir():
                     break
 
         if not stok_kurang:
-            df.to_csv("data/produk.csv", index=False)
+            df.to_csv("data/produk.csv", index=False)  
 
             now = datetime.now()
             waktu_str = now.strftime("%d %b %y %H:%M")
@@ -158,9 +157,9 @@ def halaman_kasir():
 
             total = sum(harga * qty for _, harga, qty in st.session_state.keranjang)
 
-            # Tampilkan di text_area
+            # Menampilkan di text_area
             struk_lines = []
-            struk_lines.append("         Sayur tomat")
+            struk_lines.append("         Kasir Hijau")
             struk_lines.append("=" * 30)
             struk_lines.append(f"No Nota : {nomor_nota}")
             struk_lines.append(f"Waktu   : {waktu_str}")
@@ -184,7 +183,7 @@ def halaman_kasir():
             st.text_area("🧾 Struk Transaksi", struk, height=300)
             st.download_button("📥 Unduh Struk TXT", data=struk, file_name="struk_pembelian.txt", mime="text/plain")
 
-            # === Buat versi PDF ===
+            # MEMBUAT VERSI PDF
             pdf = FPDF()
             pdf.add_page()
             pdf.set_font("Courier", size=10)
@@ -196,15 +195,16 @@ def halaman_kasir():
 
             st.download_button("📄 Unduh Struk PDF", data=pdf_buffer, file_name="struk_pembelian.pdf", mime="application/pdf")
 
-            # Simpan riwayat
+            # SIMPAN RIWAYAT
             riwayat_path = "data/riwayat.csv"
             os.makedirs("data", exist_ok=True)
             if os.path.exists(riwayat_path):
                 riwayat_df = pd.read_csv(riwayat_path)
+
             else:
                 riwayat_df = pd.DataFrame(columns=["nama", "harga", "qty", "kasir", "waktu", "nota"])
 
-            for nama, harga, qty in st.session_state.keranjang:
+            for nama, harga, qty in st.session_state.keranjang:   
                 new_row = pd.DataFrame({
                     "nama": [nama],
                     "harga": [harga],
@@ -213,20 +213,20 @@ def halaman_kasir():
                     "waktu": [now],
                     "nota": [nomor_nota]
                 })
-                riwayat_df = pd.concat([riwayat_df, new_row], ignore_index=True)
+            riwayat_df = pd.concat([riwayat_df, new_row], ignore_index=True)
 
-            riwayat_df.to_csv(riwayat_path, index=False)
+        riwayat_df.to_csv(riwayat_path, index=False)
 
-            st.success("Pembelian berhasil!")
-            st.session_state.keranjang = []
+        st.success("Pembelian berhasil!")
+        st.session_state.keranjang = []
 
-# ----------- Reset Data Produk -------------
+# ----------- RESET DATA PRODUK -------------
 def reset_data():
     if st.sidebar.button("🧹 Reset Data Produk"):
         pd.DataFrame(columns=["nama", "harga", "stok"]).to_csv("data/produk.csv", index=False)
         st.success("Data produk berhasil direset!")
 
-# ---------- Fungsi Tambah Produk ----------
+# ----------- FUNGSI TAMBAH PRODUK -------------   
 def halaman_tambah_produk():
     st.title("Tambah Produk Baru")
 
@@ -236,13 +236,13 @@ def halaman_tambah_produk():
     gambar = st.file_uploader("Gambar Produk", type=["jpg", "jpeg", "png"])
 
     if st.button("Simpan"):
-        try:
+        try: 
             harga = int(harga_str.replace('.', '').replace(',', ''))
         except ValueError:
             st.error("Harga tidak valid. Harap isi angka seperti: 5.000")
             return
-
-        # Simpan gambar
+        
+        # SIMPAN GAMBAR
         gambar_path = ""
         if gambar:
             os.makedirs("images/produk", exist_ok=True)
@@ -250,28 +250,28 @@ def halaman_tambah_produk():
             with open(gambar_path, "wb") as f:
                 f.write(gambar.read())
 
-        # Cek dan simpan ke CSV
+        # CEK DAN SIMPAN KE CSV
         if not os.path.exists("data/produk.csv"):
             df = pd.DataFrame(columns=["nama", "harga", "stok", "gambar"])
         else:
-            df = pd.read_csv("data/produk.csv")
+            df = pd.read_csv("data/produk.csv") 
             if "gambar" not in df.columns:
                 df["gambar"] = ""
-
+        
         df.loc[len(df)] = [nama, harga, stok, gambar_path]
         df.to_csv("data/produk.csv", index=False)
         st.success("Produk berhasil ditambahkan!")
 
-
-# ---------- Fungsi Hapus Produk Satuan ----------
+    
+# ---------- FUNGSI HAPUS PRODUK SATUAN ----------
 def hapus_produk():
-    st.subheader("🗑️ Hapus Produk")
+    st.subheader("🗑 Hapus Produk")
 
     df = pd.read_csv("data/produk.csv")
     if df.empty:
         st.info("Tidak ada produk yang tersedia.")
         return
-
+    
     produk_list = df["nama"].tolist()
     produk_dipilih = st.selectbox("Pilih produk yang ingin dihapus:", produk_list)
 
@@ -280,16 +280,15 @@ def hapus_produk():
         df.to_csv("data/produk.csv", index=False)
         st.success(f"Produk '{produk_dipilih}' berhasil dihapus.")
 
-# ---------- edit Produk -----------
-
+# ---------- EDIT PRODUK -----------
 def edit_produk():
-    st.subheader("✏️ Edit Produk")
+    st.subheader("✏ Edit Produk")
 
     df = pd.read_csv("data/produk.csv")
     if df.empty:
         st.info("Tidak ada produk untuk diedit.")
         return
-
+    
     produk_list = df["nama"].tolist()
     produk_dipilih = st.selectbox("Pilih produk yang ingin diedit:", produk_list)
 
@@ -307,7 +306,7 @@ def edit_produk():
                 st.error("Harga tidak valid. Harap isi angka seperti: 5.000")
                 return
 
-            # Update data
+            # UPDATE DATA
             idx = df[df["nama"] == produk_dipilih].index[0]
             df.at[idx, "nama"] = nama_baru
             df.at[idx, "harga"] = harga_baru
@@ -316,7 +315,7 @@ def edit_produk():
 
             st.success(f"Produk '{produk_dipilih}' berhasil diperbarui!")
 
-# ---------- Fungsi Laporan ----------
+# ---------- FUNGSI LAPORAN ----------
 def halaman_laporan():
     st.subheader("📊 Laporan Produk")
     df = pd.read_csv("data/produk.csv")
@@ -328,18 +327,16 @@ def halaman_laporan():
     if not os.path.exists(riwayat_path):
         st.info("Belum ada riwayat transaksi.")
         return
-
+    
     riwayat_df = pd.read_csv(riwayat_path)
     if riwayat_df.empty:
         st.info("Riwayat transaksi kosong.")
         return
-
-
-
-    # Konversi kolom waktu ke datetime
+    
+    # KONVERSI KOLOM WAKTU KE DATETIME
     riwayat_df["waktu"] = pd.to_datetime(riwayat_df["waktu"])
 
-    # Pilihan filter
+    # PILIHAN FILTER
     filter_jenis = st.radio("Filter berdasarkan:", ["Harian", "Mingguan", "Bulanan"], horizontal=True)
 
     now = pd.Timestamp.now()
@@ -353,7 +350,7 @@ def halaman_laporan():
         filtered = riwayat_df[
             (riwayat_df["waktu"].dt.isocalendar().week == minggu_ini) &
             (riwayat_df["waktu"].dt.year == tahun_ini)
-        ]
+        ]   
 
     elif filter_jenis == "Bulanan":
         bulan = st.selectbox("Pilih Bulan", list(range(1, 13)), index=now.month - 1)
@@ -362,30 +359,32 @@ def halaman_laporan():
             (riwayat_df["waktu"].dt.month == bulan) &
             (riwayat_df["waktu"].dt.year == tahun)
         ]
-
+    
     if filtered.empty:
         st.warning("Tidak ada transaksi untuk periode yang dipilih.")
     else:
         st.dataframe(filtered)
 
-        total_transaksi = (filtered["harga"] * filtered["qty"]).sum()
-        jumlah_item = filtered["qty"].sum()
-        jumlah_nota = filtered["nota"].nunique()
+    total_transaksi = (filtered["harga"] * filtered["qty"]).sum()
+    jumlah_item = filtered["qty"].sum()
+    jumlah_nota = filtered["nota"].nunique()
 
-        st.markdown(f"""
-        #### Ringkasan:
-        - Total Penjualan: **Rp{int(total_transaksi):,}**
-        - Total Item Terjual: **{int(jumlah_item)}**
-        - Jumlah Transaksi (Nota): **{jumlah_nota}**
-        """.replace(",", "."))
+    # TAMPILAN RINGKASAN
+    st.markdown("### Ringkasan:")
+    
+    col1, col2 = st.columns([1, 20])
+    with col1:
+        st.write("")
+    with col2:
+        st.markdown(f"• Total Penjualan: **Rp{int(total_transaksi):,}**".replace(",", "."))
+        st.markdown(f"• Total Item Terjual: **{int(jumlah_item)}**")
+        st.markdown(f"• Jumlah Transaksi (Nota): **{jumlah_nota}**")
 
-        # Unduh sebagai CSV
-        csv = filtered.to_csv(index=False).encode("utf-8")
-        st.download_button("📥 Unduh Laporan CSV", csv, "laporan_transaksi.csv", "text/csv")
+    # UNDUH SEBAGAI CSV
+    csv = filtered.to_csv(index=False).encode("utf-8")
+    st.download_button("📥 Unduh Laporan CSV", csv, "laporan_transaksi.csv", "text/csv")
 
-
-
-# ---------- Fungsi Logout ----------
+# ---------- FUNGSI LOGOUT ----------   
 def logout():
     if st.sidebar.button("🔒 Logout"):
         st.session_state.logged_in = False
@@ -395,21 +394,21 @@ def logout():
 
 # ---------- MAIN ----------
 
-def main():
+def main(): 
     if 'logged_in' not in st.session_state:
-        st.session_state.logged_in = False
+        st.session_state.logged_in = False 
     if 'page' not in st.session_state:
         st.session_state.page = "login"
 
     if st.session_state.logged_in:
-        st.sidebar.image("images/logo.png", width=100)
+        st.sidebar.image("images/logokasir.png", width=100)
         st.sidebar.markdown(f"### Halo, {st.session_state.username}")
 
         menu_options = {
             "Kasir": "🛒 Kasir",
             "Tambah Produk": "➕ Tambah Produk",
-            "Edit Produk": "✏️ Edit Produk",
-            "Hapus Produk": "🗑️ Hapus Produk",
+            "Edit Produk": "✏ Edit Produk",
+            "Hapus Produk": "🗑 Hapus Produk",
             "Laporan": "📊 Laporan"
         }
 
@@ -432,6 +431,7 @@ def main():
              hapus_produk()
         elif st.session_state.menu == "Laporan":
              halaman_laporan()
+
     else:
         if st.session_state.page == "login":
             login()
